@@ -4,20 +4,19 @@ import RenderFileIcon from "./RenderFileIcon";
 import CloseIcon from "./SVG/CloseIcon";
 import {
   setClickedFileAction,
-  setOpenedFilesAction,
+  setTabToCloseAction,
 } from "../app/features/fileTreeSlice";
 import { RootState } from "../app/store";
 
 interface IProps {
   file: IFile;
+  onRemove: (fileId: string | null) => void;
 }
 
-const OpenedFilesBarTab = ({ file }: IProps) => {
+const OpenedFilesBarTab = ({ file, onRemove }: IProps) => {
   const { id, name, content } = file;
   const dispatch = useDispatch();
-  const { clickedFile, openedFiles } = useSelector(
-    (state: RootState) => state.tree
-  );
+  const { clickedFile } = useSelector((state: RootState) => state.tree);
 
   const onclick = () => {
     dispatch(
@@ -29,34 +28,18 @@ const OpenedFilesBarTab = ({ file }: IProps) => {
     );
   };
 
-  const onRemove = () => {
-    const filtered = openedFiles.filter((f) => f.id !== file.id);
-    const lastTab = filtered[filtered.length - 1];
-    if (!lastTab) {
-      dispatch(setOpenedFilesAction([]));
-      dispatch(
-        setClickedFileAction({ fileContent: "", filename: "", activeTabId: "" })
-      );
-      return;
-    }
-    dispatch(setOpenedFilesAction(filtered));
-    dispatch(
-      setClickedFileAction({
-        fileContent: lastTab.content,
-        filename: lastTab.name,
-        activeTabId: lastTab.id,
-      })
-    );
-  };
-
   return (
     <div
-      className={`max-w-screen-md flex p-2 items-center border-t-2 ${
+      className={`max-w-screen-md flex p-2 min-w-[175px] items-center border-t-2 ${
         file.id === clickedFile.activeTabId
           ? "border-[#cf6ccf]"
           : "border-transparent"
       }`}
       onClick={onclick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        dispatch(setTabToCloseAction(file.id));
+      }}
     >
       <span>
         <RenderFileIcon filename={file.name} />
@@ -65,10 +48,10 @@ const OpenedFilesBarTab = ({ file }: IProps) => {
         {file.name}
       </span>
       <span
-        className="cursor-pointer hover:bg-[#64646473] duration-300 flex justify-center  w-fit mr-2 p-1 rounded-md"
+        className="cursor-pointer  hover:bg-[#64646473] duration-300 flex w-fit ml-auto p-1 rounded-md"
         onClick={(e) => {
           e.stopPropagation();
-          onRemove();
+          onRemove(file.id);
         }}
       >
         <CloseIcon />
